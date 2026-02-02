@@ -1,14 +1,16 @@
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from jose import JWTError, jwt
+from passlib.context import CryptContext
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from passlib.context import CryptContext
 from starlette import status
+
 from database import SessionLocal
 from models import Users
-from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
-from jose import JWTError, jwt
 
 router = APIRouter(
     prefix='/auth',
@@ -43,6 +45,7 @@ def get_db():
 db_dependency = Annotated[Session, Depends(get_db)]
 
 def authenticate_user(username: str, password: str, db):
+    print('authenticate user method called')
     user = db.query(Users).filter(Users.username == username).first()
     if not user:
         return False
@@ -51,13 +54,16 @@ def authenticate_user(username: str, password: str, db):
     return user
 
 def create_access_token(username: str, user_id: int, expires_delta: timedelta):
-    encode = {'sub': username, 'id': user_id}
-    expires = datetime.now(timezone.utc) + expires_delta
-    encode.update({'exp': expires})
-    return jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
+    print('create access token method called')
+    payload = {
+        "sub": username,
+        "id": user_id,
+        "exp": datetime.now(timezone.utc) + expires_delta,
+    }
+    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
-    print('get current user called')
+    print('get current user method called')
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get('sub')
@@ -73,6 +79,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_user(db:db_dependency, create_user_request: CreateUserRequest):
+    print('create user api called')
     # below line will not work because CreateUserRequest has password, but Users model has hashed_password
     # user_model = Users(**create_user_request.model_dump())   
 
@@ -95,6 +102,7 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
     print('token api called')
     user = authenticate_user(form_data.username, form_data.password, db)
     if not user:
+        print('token api3 called')
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Could not validate user')
     
     token = create_access_token(user.username, user.id, timedelta(minutes=20))

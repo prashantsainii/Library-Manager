@@ -1,10 +1,13 @@
 from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, Path
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
-from fastapi import APIRouter, Depends, HTTPException, Path
-from models import Todos
-from database import SessionLocal
 from starlette import status
+
+from database import SessionLocal
+from models import Todos
+
 from .auth import get_current_user
 
 router = APIRouter()
@@ -28,7 +31,7 @@ class TodoRequest(BaseModel):
 
 @router.get("/", status_code=status.HTTP_200_OK)
 async def read_all(user: user_dependency, db: db_dependency):
-    
+    print('read all todos api called')
     if user is None:
         raise HTTPException(status_code=401, detail='Authentication failed')
     return db.query(Todos).filter(Todos.owner_id == user.get('id')).all()
@@ -36,6 +39,7 @@ async def read_all(user: user_dependency, db: db_dependency):
 
 @router.get("/todo/{todo_id}", status_code=status.HTTP_200_OK)
 async def read_todo(user: user_dependency, db: db_dependency, todo_id: int = Path(gt=0)):
+    print('read todo api called')
     if user is None:
         raise HTTPException(status_code=401, detail='Authentication failed')
     
@@ -47,6 +51,7 @@ async def read_todo(user: user_dependency, db: db_dependency, todo_id: int = Pat
 
 @router.post("/todo", status_code=status.HTTP_201_CREATED)
 async def create_todo(user: user_dependency, db: db_dependency, todo_request: TodoRequest):
+    print('create todo api called')
     if user is None:
         raise HTTPException(status_code=401, detail='Authentication failed')
     
