@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
 # Database connection URL (SQLite file)
 SQLALCHEMY_DATABASE_URL = 'sqlite:///./todosapp.db'     # db is inside this directory of todosapp
